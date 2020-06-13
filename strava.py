@@ -41,12 +41,12 @@ def build_run(locations):
              
              
 locations = []    
-collect_data("longest_run.gpx")
+collect_data("Afternoon_run.gpx")
 build_run(locations)
-route = Route(locations, include_rest = False)
+route = Route(locations, include_rest = True)
 route.print_summary()
 #route.graph_by_time(60)
-route.graph_by_distance(.5)
+route.graph_by_distance(.1)
 
 
             

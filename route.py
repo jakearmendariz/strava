@@ -6,6 +6,8 @@ from matplotlib.pyplot import figure
 import mpld3
 from scipy.interpolate import interp1d
 
+fig, ax = plt.subplots()
+
 
 class Route(object):
     def __init__(self, locations, include_rest = True):
@@ -92,12 +94,16 @@ class Route(object):
         
         index, unit_distance, time_interval = 0, 0, 0
         prev_loc = self.locations[0]
-        figure(figsize=(8,6))
+        #figure(figsize=(8,6))
         
         for loc in self.locations[1:]:
             unit_distance += prev_loc.distance_to(loc)*0.000621371
             time_interval += loc.time - prev_loc.time
             # If more than X seconds pass, then calculate the average for that time frame and save into array to be plotted
+            if(loc.time - prev_loc.time > 10):
+                time_interval -= loc.time - prev_loc.time
+                unit_distance -= prev_loc.distance_to(loc)*0.000621371
+                
             if(unit_distance > distance):
                 #print("time_interval:", (time_interval/60))
                 pace[index] = (time_interval/60)/(distance)
@@ -107,8 +113,10 @@ class Route(object):
                 index += 1
                 
             prev_loc = loc
-        pace = pace[:index]
-        pace = normalize_data(pace)
+        pace1 = pace[:index]
+        pace = normalize_data(pace1)
+        # for i in range(len(pace)):
+        #     print(round(pace1[i], 1), "->", round(pace[i], 1))
         altitude = altitude[:index]
         if(min(altitude) < 0):
             altitude -= min(altitude)
@@ -118,30 +126,37 @@ class Route(object):
         smooth_line(x, pace)
         
         #line = pd.Series(data=pace, index=x)
-        line1 = pd.Series(data = altitude, index=x)
-        plt.ylim(ymin=min(pace) - 2)
-        plt.ylim(ymin=0)
-        plt.ylim(ymax=max(pace) + 2)
+        #line1 = pd.Series(data = altitude, index=x)
+        ax.plot(x, altitude, label="elevation")
+        #fig.ylim(ymin=min(pace) - 2)
+        #fig.ylim(ymin=0)
+        #fig.ylim(ymax=max(pace) + 2)
         #line.plot(label="pace", legend=True, linewidth=2.0)
-        line1.plot(label="elevation", legend=True, linewidth=2.0)
-        plt.ylabel('pace')
-        plt.xlabel('time')
+        #line1.plot(label="elevation", legend=True, linewidth=2.0)
+        #plt.ylabel('pace')
+       # plt.xlabel('time')
+        ax.grid(color='gray', linestyle='-', linewidth=0.5)
         plt.show()
             
 def normalize_data(data):
     for i in range(1, len(data)-1):
         if data[i-1] < data[i] and data[i] > data[i+1]:
+            #print("normalized ", data[i])
             if data[i-1]*2 < data[i] and data[i] > data[i+1]*2:
                 data[i] = (data[i-1] + data[i+1])/2
             else:
                 data[i] = data[i] *.5 + data[i-1]*.25 + data[i+1]*.25
+            #print("result ", data[i])
     return data
     
     
 
 def smooth_line(x, y):
-    x_new = np.linspace(x.min(), x.max(),500)
+    x_new = np.linspace(x.min(), x.max(),2000)
     f = interp1d(x, y, kind='quadratic')
     y_smooth=f(x_new)
-    plt.plot (x_new,y_smooth, label="pace")
-    plt.scatter (x, y, s=10)
+    ax.plot (x_new,y_smooth, label="pace")
+    #plt.scatter (x, y, s=10)
+    
+def create_table(x, y, distance):
+    pass
